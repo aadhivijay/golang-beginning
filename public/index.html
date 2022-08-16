@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta http-equiv="X-UA-Compatible" content="ie=edge" />
+  <title>go-ws</title>
+</head>
+
+<body>
+  <h2>Hello World</h2>
+  <button id="socket-toggle">Connect</button>
+
+  <script>
+    let socket;
+    document.getElementById('socket-toggle').onclick = () => {
+      socket = new WebSocket("ws://127.0.0.1:3000/ws?authorization=summa&id=1");
+      console.log("Attempting Connection...");
+
+      socket.onopen = () => {
+        console.log("Successfully Connected");
+        socket.send("Hi From the Client!")
+      };
+
+      socket.onclose = (event) => {
+        console.log("Socket Closed Connection: ", event);
+      };
+
+      socket.onerror = (error) => {
+        console.log("Socket Error: ", error);
+      };
+
+      socket.onmessage = event => {
+        console.log("[FROM:SERVER] ", event.data);
+      }
+    };
+  </script>
+</body>
+
+</html>
