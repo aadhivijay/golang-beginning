@@ -10,12 +10,16 @@
 
 <body>
   <h2>Hello World</h2>
+  <input type="text" id="socket-id" name="id">
   <button id="socket-toggle">Connect</button>
 
   <script>
     let socket;
     document.getElementById('socket-toggle').onclick = () => {
-      socket = new WebSocket("ws://127.0.0.1:3000/ws?authorization=summa&id=1");
+      const token = 'test';
+      const id = document.getElementById('socket-id').value;
+      console.log(`ID: ${id}`);
+      socket = new WebSocket(`ws://127.0.0.1:3000/ws?authorization=${token}&id=${id}`);
       console.log("Attempting Connection...");
 
       socket.onopen = () => {

@@ -57,12 +57,6 @@ var studentsList = []Student{
 	{Id: "2", Name: "Test 2", Age: 30, Email: "test2@biofourmis.com", Address: Address{Line1: "line 1", Line2: "line 2", City: "City", PinCode: "100000"}, Degree: "B.E", IsAlumni: true},
 }
 
-func ping(con *gin.Context) {
-	con.JSON(http.StatusOK, gin.H{
-		"msg": "PONG",
-	})
-}
-
 func addStudent(con *gin.Context) {
 	var st Student
 	if err := con.ShouldBindJSON(&st); err != nil {
