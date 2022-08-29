@@ -3,8 +3,10 @@ package websocket
 import (
 	"fmt"
 	"golang/middleware"
+	"math/rand"
 	"net"
 	"net/http"
+	"sync"
 
 	"github.com/gin-gonic/gin"
 	"github.com/gobwas/ws"
@@ -17,6 +19,7 @@ type Client struct {
 }
 
 var clientsList = map[string]Client{}
+var mutex = &sync.RWMutex{}
 
 type Event struct {
 	Event string   `json:"event"`
@@ -33,6 +36,15 @@ func Init(server *gin.Engine) {
 	}
 }
 
+func RandStringBytes(n int) string {
+	const letterBytes = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890"
+	b := make([]byte, n)
+	for i := range b {
+		b[i] = letterBytes[rand.Intn(len(letterBytes))]
+	}
+	return string(b)
+}
+
 func handleSocketConnection(c *gin.Context) {
 	conn, _, _, err := ws.UpgradeHTTP(c.Request, c.Writer)
 	if err != nil {
@@ -42,7 +54,7 @@ func handleSocketConnection(c *gin.Context) {
 
 	id, ok := c.GetQuery("id")
 	if !ok {
-		id = "1"
+		id = RandStringBytes(32)
 	}
 
 	newClient := Client{
@@ -50,7 +62,9 @@ func handleSocketConnection(c *gin.Context) {
 		Conn:       conn,
 		MsgChannel: make(chan string),
 	}
+	mutex.Lock()
 	clientsList[id] = newClient
+	mutex.Unlock()
 	fmt.Printf("New client added! %+v\n", newClient)
 
 	go initReadMessage(conn, newClient)
@@ -62,7 +76,9 @@ func initReadMessage(con net.Conn, client Client) {
 		fmt.Printf("Client disconnected! %+v\n", client)
 		close(client.MsgChannel)
 		con.Close()
+		mutex.Lock()
 		delete(clientsList, client.Id)
+		mutex.Unlock()
 	}()
 	for {
 		header, errHeader := ws.ReadHeader(con)
@@ -78,7 +94,6 @@ func initReadMessage(con net.Conn, client Client) {
 				fmt.Printf("[ERROR] readMessage: Read: %v\n", errRead)
 				return
 			}
-			fmt.Println("Before Cipher: ", payload)
 
 			if header.Masked {
 				ws.Cipher(payload, header.Mask, 0)
@@ -133,13 +148,25 @@ func postMessage(c *gin.Context) {
 
 	fmt.Printf("POST MSG: `%v` to client: %v\n", event.Data, event.Id)
 
-	for _, v := range event.Id {
-		if client, ok := clientsList[v]; ok {
-			client.MsgChannel <- event.Data
-			continue
+	if len(event.Id) > 0 {
+		mutex.RLock()
+		for _, v := range event.Id {
+			if client, ok := clientsList[v]; ok {
+				client.MsgChannel <- event.Data
+				continue
+			}
+			fmt.Printf("Client: %v, already disconnected!\n", v)
 		}
-		fmt.Printf("Client: %v, already disconnected!\n", v)
+		mutex.RUnlock()
+		return
 	}
+
+	// send to all
+	mutex.RLock()
+	for _, client := range clientsList {
+		client.MsgChannel <- event.Data
+	}
+	mutex.RUnlock()
 
 	c.JSON(http.StatusOK, event)
 }
