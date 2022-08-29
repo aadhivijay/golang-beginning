@@ -1,0 +1,20 @@
+config:
+    target: "ws://127.0.0.1:3000/ws?authorization=test"
+    ensure:
+      maxErrorRate: 1
+    phases:
+      - duration: 5
+        arrivalRate: 1
+        rampTo: 10
+        name: "Warming up"
+      - duration: 60
+        arrivalRate: 10
+        rampTo: 100
+        name: "Max load"
+scenarios:
+  - engine: "ws"
+    flow:
+      - send: "hello"
+      - think: 3
+      - send: "how are you?"
+      - think: 10

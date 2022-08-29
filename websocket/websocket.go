@@ -100,6 +100,9 @@ func initReadMessage(con net.Conn, client Client) {
 			}
 
 			fmt.Printf("Msg: `%v` from client: %v\n", string(payload), client.Id)
+
+			// sending back to client
+			client.MsgChannel <- "From Server: " + string(payload)
 		}
 
 		if header.OpCode == ws.OpClose {
