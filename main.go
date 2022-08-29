@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"golang/config"
 	"golang/students"
 	"golang/websocket"
 	"log"
@@ -9,6 +10,8 @@ import (
 
 	"github.com/gin-gonic/gin"
 )
+
+var env config.Config = *config.GetConfig()
 
 func main() {
 	fmt.Println("Hello World!")
@@ -24,7 +27,7 @@ func startServer() {
 	students.Init(ginServer)
 	websocket.Init(ginServer)
 
-	if err := ginServer.Run(":3000"); err != nil {
+	if err := ginServer.Run(":" + env.Port); err != nil {
 		log.Fatal(err)
 	}
 }
