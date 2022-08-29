@@ -1,8 +1,11 @@
 package students
 
 import (
+	"errors"
 	"fmt"
 	"net/http"
+
+	"golang/utils"
 
 	"github.com/gin-gonic/gin"
 )
@@ -60,9 +63,7 @@ var studentsList = []Student{
 func addStudent(con *gin.Context) {
 	var st Student
 	if err := con.ShouldBindJSON(&st); err != nil {
-		con.JSON(http.StatusBadRequest, gin.H{
-			"error": err.Error(),
-		})
+		utils.SendErrorResponse(con, http.StatusBadRequest, err)
 		return
 	}
 
@@ -72,7 +73,7 @@ func addStudent(con *gin.Context) {
 
 	studentsList = append(studentsList, st)
 
-	con.JSON(http.StatusCreated, st)
+	utils.SendSuccessResponse(con, http.StatusCreated, st)
 }
 
 func getStudents(con *gin.Context) {
@@ -80,7 +81,7 @@ func getStudents(con *gin.Context) {
 	if name, ok := con.GetQuery("name"); ok {
 		search = name
 	} else {
-		con.JSON(http.StatusOK, studentsList)
+		utils.SendSuccessResponse(con, http.StatusOK, studentsList)
 		return
 	}
 
@@ -95,21 +96,17 @@ func getStudents(con *gin.Context) {
 	}
 
 	if !found {
-		con.JSON(http.StatusNotFound, gin.H{
-			"msg": "Not found",
-		})
+		utils.SendErrorResponse(con, http.StatusNotFound, errors.New("Not found"))
 		return
 	}
 
-	con.JSON(http.StatusOK, result)
+	utils.SendSuccessResponse(con, http.StatusOK, result)
 }
 
 func deleteStudents(con *gin.Context) {
 	id, ok := con.Params.Get("id")
 	if !ok {
-		con.JSON(http.StatusBadRequest, gin.H{
-			"msg": "`id` is required",
-		})
+		utils.SendErrorResponse(con, http.StatusBadRequest, errors.New("`id` is required"))
 		return
 	}
 
@@ -123,11 +120,9 @@ func deleteStudents(con *gin.Context) {
 	}
 
 	if !found {
-		con.JSON(http.StatusNotFound, gin.H{
-			"msg": "`id` not found",
-		})
+		utils.SendErrorResponse(con, http.StatusBadRequest, errors.New("`id` not found"))
 		return
 	}
 
-	con.Status(http.StatusNoContent)
+	utils.SendSuccessResponse(con, http.StatusNoContent, gin.H{})
 }
