@@ -15,10 +15,7 @@
 
   <script>
     let socket;
-    document.getElementById('socket-toggle').onclick = () => {
-      const token = 'test';
-      const id = document.getElementById('socket-id').value;
-      console.log(`ID: ${id}`);
+    function connect(token, id) {
       socket = new WebSocket(`ws://127.0.0.1:3000/ws?authorization=${token}&id=${id}`);
       console.log("Attempting Connection...");
 
@@ -28,7 +25,7 @@
       };
 
       socket.onclose = (event) => {
-        console.log("Socket Closed Connection: ", event);
+        console.log("Socket Connection Closed: ", event);
       };
 
       socket.onerror = (error) => {
@@ -38,6 +35,11 @@
       socket.onmessage = event => {
         console.log("[FROM:SERVER] ", event.data);
       }
+    }
+    document.getElementById('socket-toggle').onclick = () => {
+      const token = 'test';
+      const id = document.getElementById('socket-id').value;
+      connect(token, id);
     };
   </script>
 </body>
