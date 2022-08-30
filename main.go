@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"golang/config"
+	"golang/middleware"
 	"golang/students"
 	"golang/websocket"
 	"log"
@@ -20,7 +21,11 @@ func main() {
 }
 
 func startServer() {
-	ginServer := gin.Default()
+	ginServer := gin.New()
+
+	// attach middleware
+	ginServer.Use(gin.LoggerWithFormatter(middleware.RequestLogger))
+	ginServer.Use(gin.Recovery())
 
 	ginServer.GET("/ping", ping)
 
